@@ -1,0 +1,195 @@
+import os
+from flask import Flask, request
+import africastalking
+
+# Initialize Africa's Talking
+username = "Tresorafrica"
+api_key = "atsk_b22a3c32f3d24cebd8d7a79b3493ccbeb7b9175d93e3ca4621d01367cdbda94c97562fc7"
+africastalking.initialize(username, api_key)
+sms = africastalking.SMS
+
+app = Flask(__name__)
+
+# A dictionary to store user states
+user_states = {}
+
+@app.route("/ussd", methods=['POST'])
+def ussd():
+    session_id = request.values.get("sessionId", None)
+    service_code = request.values.get("serviceCode", None)
+    phone_number = request.values.get("phoneNumber", None)
+    text = request.values.get("text", "default")
+
+    response = ""
+
+    if text == '':
+        response = "CON Welcome to the Open Hackathon on Tourism and Culture Solutions\n"
+        response += "1. English \n"
+        response += "2. Kinyarwanda\n"
+        response += "3. Kiswahili"
+    elif text == '1':
+        response = "CON Choose a challenge to address\n"
+        response += "1. Culture and Knowledge Preservation\n"
+        response += "2. User Experience and Engagement\n"
+        response += "3. Tourism Best Practices\n"
+        response += "4. Data-driven Insights\n"
+        response += "5. Personalization\n"
+    elif text == '1*1':
+        response = "CON Choose an option for Culture and Knowledge Preservation\n"
+        response += "1. Digitize cultural heritage\n"
+        response += "2. Use AI tools to preserve indigenous knowledge"
+    elif text == '1*1*1':
+        user_states[phone_number] = 'digitize_heritage'
+        response = "CON Digitizing cultural heritage. Please enter details of the cultural artifact:\n"
+    elif text == '1*1*2':
+        user_states[phone_number] = 'preserve_knowledge'
+        response = "CON Using AI to preserve indigenous knowledge. Please enter details:\n"
+    elif user_states.get(phone_number) == 'digitize_heritage':
+        try:
+            response = sms.send(f"Details for digitizing cultural heritage: {text}", [phone_number])
+            print(response)
+        except Exception as e:
+            print(str(e))
+        del user_states[phone_number]
+        response = "END Thank you for your input! We are working on digitizing the cultural heritage."
+    elif user_states.get(phone_number) == 'preserve_knowledge':
+        try:
+            response = sms.send(f"Details for preserving indigenous knowledge: {text}", [phone_number])
+            print(response)
+        except Exception as e:
+            print(str(e))
+        del user_states[phone_number]
+        response = "END Thank you for your input! We are using AI tools to preserve the knowledge."
+    elif text == '1*2':
+        response = "CON Improving visitor experience and engagement\n"
+        response += "1. Collect feedback\n"
+        response += "2. Navigation assistance\n"
+        response += "3. Offer guides"
+    elif text == '1*2*1':
+        user_states[phone_number] = 'collect_feedback'
+        response = "CON Please enter your feedback:\n"
+    elif user_states.get(phone_number) == 'collect_feedback':
+        try:
+            response = sms.send(f"Visitor feedback: {text}", [phone_number])
+            print(response)
+        except Exception as e:
+            print(str(e))
+        del user_states[phone_number]
+        response = "END Thank you for your feedback!"
+    elif text == '1*2*2':
+        response = "CON Navigation assistance options\n"
+        response += "1. Akagera National Park\n"
+        response += "2. Volcano National Park"
+    elif text == '1*2*2*1':
+        response = "END Navigation details for Akagera National Park: Visit our site for more information."
+    elif text == '1*2*2*2':
+        response = "END Navigation details for Volcano National Park: Visit our site for more information."
+    elif text == '1*2*3':
+        response = "CON Choose a guide\n"
+        response += "1. Historical guide\n"
+        response += "2. Cultural guide"
+    elif text == '1*2*3*1':
+        response = "END Historical guide: Visit our site for more information."
+    elif text == '1*2*3*2':
+        response = "END Cultural guide: Visit our site for more information."
+    elif text == '1*3':
+        response = "CON Promoting sustainable tourism practices\n"
+        response += "1. Carbon footprint tracking\n"
+        response += "2. Responsible travel planning"
+    elif text == '1*3*1':
+        user_states[phone_number] = 'carbon_footprint'
+        response = "CON Enter details to track carbon footprint:\n"
+    elif user_states.get(phone_number) == 'carbon_footprint':
+        try:
+            response = sms.send(f"Carbon footprint details: {text}", [phone_number])
+            print(response)
+        except Exception as e:
+            print(str(e))
+        del user_states[phone_number]
+        response = "END Thank you! We are tracking your carbon footprint."
+    elif text == '1*3*2':
+        user_states[phone_number] = 'responsible_travel'
+        response = "CON Enter details for responsible travel planning:\n"
+    elif user_states.get(phone_number) == 'responsible_travel':
+        try:
+            response = sms.send(f"Responsible travel planning details: {text}", [phone_number])
+            print(response)
+        except Exception as e:
+            print(str(e))
+        del user_states[phone_number]
+        response = "END Thank you! We are planning your travel responsibly."
+    elif text == '1*4':
+        response = "CON Enhancing tourism infrastructure through data-driven insights\n"
+        response += "1. Provide data\n"
+        response += "2. Get suggestions"
+    elif text == '1*4*1':
+        user_states[phone_number] = 'provide_data'
+        response = "CON Enter data for tourism insights:\n"
+    elif user_states.get(phone_number) == 'provide_data':
+        try:
+            response = sms.send(f"Tourism data provided: {text}", [phone_number])
+            print(response)
+        except Exception as e:
+            print(str(e))
+        del user_states[phone_number]
+        response = "END Thank you! We are using the data to improve tourism."
+    elif text == '1*4*2':
+        user_states[phone_number] = 'get_suggestions'
+        response = "CON Enter your query for tourism suggestions:\n"
+    elif user_states.get(phone_number) == 'get_suggestions':
+        try:
+            response = sms.send(f"Tourism suggestion query: {text}", [phone_number])
+            print(response)
+        except Exception as e:
+            print(str(e))
+        del user_states[phone_number]
+        response = "END Thank you! We will provide you with suggestions soon."
+    elif text == '1*5':
+        response = "CON Developing personalized tourism services\n"
+        response += "1. Get personalized recommendations\n"
+        response += "2. Accessible tourism information"
+    elif text == '1*5*1':
+        user_states[phone_number] = 'personalized_recommendations'
+        response = "CON Enter your preferences for personalized recommendations:\n"
+    elif user_states.get(phone_number) == 'personalized_recommendations':
+        try:
+            response = sms.send(f"User preferences: {text}", [phone_number])
+            print(response)
+        except Exception as e:
+            print(str(e))
+        del user_states[phone_number]
+        response = "END Thank you! We will provide personalized recommendations soon."
+    elif text == '1*5*2':
+        user_states[phone_number] = 'accessible_info'
+        response = "CON Enter your requirements for accessible tourism information:\n"
+    elif user_states.get(phone_number) == 'accessible_info':
+        try:
+            response = sms.send(f"Accessibility requirements: {text}", [phone_number])
+            print(response)
+        except Exception as e:
+            print(str(e))
+        del user_states[phone_number]
+        response = "END Thank you! We will provide accessible information soon."
+    elif text == '2':
+        # Similar blocks for Kinyarwanda
+        response = "CON Hitamo ikibazo cyo gukemura\n"
+        response += "1. Kubika umuco n'ubumenyi\n"
+        response += "2. Guhuza abakiriya n'abantu\n"
+        response += "3. Gukora ibintu neza\n"
+        response += "4. Gusuzuma amakuru\n"
+        response += "5. Guhitamo"
+    # Add similar blocks for Kinyarwanda options
+    elif text == '3':
+        # Similar blocks for Kiswahili
+        response = "CON Chagua changamoto ya kushughulikia\n"
+        response += "1. Kuhifadhi na kueneza urithi wa kitamaduni\n"
+        response += "2. Kukuza uzoefu na ushirikishwaji wa wageni\n"
+        response += "3. Mipango bora ya utalii\n"
+        response += "4. Maarifa ya kutumia data\n"
+        response += "5. Kubinafsisha"
+    # Add similar blocks for Kiswahili options
+
+    return response
+
+if __name__ == "__main__":
+    app.run(port=5000, debug=True)
